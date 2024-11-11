@@ -1,126 +1,341 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Custom Time Travel Fractal</title>
+<head>
+    <meta charset="UTF-8">
+    <title>Custom Time Travel Fractal with Layers</title>
+    <!-- Bootswatch Darkly Theme CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/darkly/bootstrap.min.css">
     <style>
-      body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background-color: #000;
-        color: #fff;
-      }
-      canvas {
-        border: 1px solid #fff;
-      }
-      input {
-        margin: 5px;
-      }
+        body {
+            background-color: #000;
+            color: #fff;
+        }
+        #main-container {
+            display: flex;
+            flex-direction: row;
+            margin-top: 20px;
+        }
+        #layers-panel {
+            width: 250px;
+            border-right: 1px solid #444;
+            padding: 10px;
+        }
+        #fractal-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas {
+            border: 1px solid #fff;
+            margin-top: 10px;
+        }
+        .layer-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #222;
+            padding: 5px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        .layer-item.active {
+            background-color: #444;
+        }
+        .layer-name {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+        .layer-controls button {
+            margin-left: 5px;
+        }
+        .modal-content {
+            background-color: #2c2c2c;
+        }
+        .modal-header, .modal-footer {
+            border-color: #444;
+        }
+        .modal-title {
+            color: #fff;
+        }
+        .form-label, .form-control {
+            color: #fff;
+        }
+        .form-control {
+            background-color: #1b1b1b;
+            border-color: #555;
+        }
     </style>
-  </head>
-  <body>
-    <h1>Custom Time Travel Fractal</h1>
-    <canvas id="fractalCanvas" width="600" height="600"></canvas>
-    <div>
-      <label
-        >S (Curvature Factor):
-        <input type="number" id="sInput" value="1.5" step="0.1"
-      /></label>
-      <label
-        >R (Reflective Index):
-        <input type="number" id="rInput" value="0.95" step="0.01"
-      /></label>
-      <label
-        >θ (Angle in Degrees):
-        <input type="number" id="thetaInput" value="45" step="1"
-      /></label>
-      <label
-        >E_sync (Energy):
-        <input type="number" id="eSyncInput" value="2.0" step="0.1"
-      /></label>
-      <label
-        >Φ (Phase Shift in Degrees):
-        <input type="number" id="phiInput" value="30" step="1"
-      /></label>
-      <button onclick="drawFractal()">Redraw Fractal</button>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Custom Time Travel Fractal with Layers</a>
+    </nav>
+
+    <div id="main-container">
+        <!-- Layers Panel -->
+        <div id="layers-panel">
+            <h4>Layers</h4>
+            <div id="layers-list">
+                <!-- Layers will be dynamically added here -->
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="addLayer()">Add Layer</button>
+        </div>
+
+        <!-- Fractal Container -->
+        <div id="fractal-container">
+            <canvas id="fractalCanvas" width="600" height="600"></canvas>
+            <button class="btn btn-success mt-3" onclick="drawFractal()">Redraw Fractals</button>
+        </div>
     </div>
 
+    <!-- Layer Properties Modal -->
+    <div class="modal fade" id="layerModal" tabindex="-1" aria-labelledby="layerModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-light">
+          <div class="modal-header">
+            <h5 class="modal-title" id="layerModalLabel">Layer Properties</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="layerForm">
+                <div class="mb-3">
+                    <label for="layerName" class="form-label">Layer Name</label>
+                    <input type="text" class="form-control" id="layerName">
+                </div>
+                <div class="mb-3">
+                    <label for="layerColor" class="form-label">Color</label>
+                    <input type="color" class="form-control form-control-color" id="layerColor" value="#ff0000">
+                </div>
+                <div class="mb-3">
+                    <label for="sInput" class="form-label">S (Curvature Factor)</label>
+                    <input type="number" class="form-control" id="sInput" value="1.5" step="0.1">
+                </div>
+                <div class="mb-3">
+                    <label for="rInput" class="form-label">R (Reflective Index)</label>
+                    <input type="number" class="form-control" id="rInput" value="0.95" step="0.01">
+                </div>
+                <div class="mb-3">
+                    <label for="thetaInput" class="form-label">θ (Angle in Degrees)</label>
+                    <input type="number" class="form-control" id="thetaInput" value="45" step="1">
+                </div>
+                <div class="mb-3">
+                    <label for="eSyncInput" class="form-label">E<sub>sync</sub> (Energy)</label>
+                    <input type="number" class="form-control" id="eSyncInput" value="2.0" step="0.1">
+                </div>
+                <div class="mb-3">
+                    <label for="phiInput" class="form-label">Φ (Phase Shift in Degrees)</label>
+                    <input type="number" class="form-control" id="phiInput" value="30" step="1">
+                </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="saveLayerProperties()">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies (Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-      const canvas = document.getElementById('fractalCanvas');
-      const ctx = canvas.getContext('2d');
+        const canvas = document.getElementById('fractalCanvas');
+        const ctx = canvas.getContext('2d');
 
-      // Get input elements
-      const sInput = document.getElementById('sInput');
-      const rInput = document.getElementById('rInput');
-      const thetaInput = document.getElementById('thetaInput');
-      const eSyncInput = document.getElementById('eSyncInput');
-      const phiInput = document.getElementById('phiInput');
+        let layers = [];
+        let activeLayerIndex = null;
 
-      // Function to map value to color
-      function getColor(iteration, maxIter) {
-        const ratio = iteration / maxIter;
-        const colorValue = Math.floor(255 * ratio);
-        return `rgb(${colorValue}, ${colorValue}, ${colorValue})`;
-      }
-
-      // Custom fractal formula based on the time travel equation
-      function customFractalFormula(z, c, S, R, theta, E_sync, Phi) {
-        const cosTheta = Math.cos(theta);
-        const sinPhi = Math.sin(Phi);
-        if (E_sync * sinPhi === 0) return z;
-        const timeTravelFactor = (S * R * cosTheta) / (E_sync * sinPhi);
-        return {
-          re: z.re ** 2 - z.im ** 2 + timeTravelFactor * c.re,
-          im: 2 * z.re * z.im + timeTravelFactor * c.im,
-        };
-      }
-
-      // Draw the fractal on the canvas
-      function drawFractal() {
-        const width = canvas.width;
-        const height = canvas.height;
-        const maxIter = 100;
-        const s = parseFloat(sInput.value);
-        const r = parseFloat(rInput.value);
-        const theta = parseFloat(thetaInput.value) * (Math.PI / 180);
-        const eSync = parseFloat(eSyncInput.value);
-        const phi = parseFloat(phiInput.value) * (Math.PI / 180);
-
-        // Define the complex plane boundaries
-        const xMin = -2.0,
-          xMax = 2.0;
-        const yMin = -2.0,
-          yMax = 2.0;
-
-        // Iterate over each pixel on the canvas
-        for (let px = 0; px < width; px++) {
-          for (let py = 0; py < height; py++) {
-            // Map pixel coordinates to the complex plane
-            const cRe = xMin + (px / width) * (xMax - xMin);
-            const cIm = yMin + (py / height) * (yMax - yMin);
-            let z = { re: 0, im: 0 };
-            let c = { re: cRe, im: cIm };
-            let iteration = 0;
-
-            // Iterate using the custom fractal formula
-            while (iteration < maxIter && z.re ** 2 + z.im ** 2 <= 4) {
-              z = customFractalFormula(z, c, s, r, theta, eSync, phi);
-              iteration++;
-            }
-
-            // Determine the color based on the iteration count
-            const color =
-              iteration === maxIter ? 'black' : getColor(iteration, maxIter);
-            ctx.fillStyle = color;
-            ctx.fillRect(px, py, 1, 1);
-          }
+        // Initialize the layers panel with a default layer
+        function init() {
+            addLayer();
         }
-      }
 
-      // Initial draw
-      drawFractal();
+        // Function to add a new layer
+        function addLayer() {
+            const newLayer = {
+                name: 'Layer ' + (layers.length + 1),
+                color: '#'+Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+                s: 1.5,
+                r: 0.95,
+                theta: 45,
+                eSync: 2.0,
+                phi: 30,
+                visible: true,
+            };
+            layers.push(newLayer);
+            activeLayerIndex = layers.length -1;
+            updateLayersPanel();
+            drawFractal();
+        }
+
+        // Function to update the layers panel UI
+        function updateLayersPanel() {
+            const layersList = document.getElementById('layers-list');
+            layersList.innerHTML = '';
+            layers.forEach((layer, index) => {
+                const layerDiv = document.createElement('div');
+                layerDiv.className = 'layer-item' + (index === activeLayerIndex ? ' active' : '');
+                layerDiv.innerHTML = `
+                    <span class="layer-name" onclick="selectLayer(${index})">${layer.name}</span>
+                    <div class="layer-controls">
+                        <input type="checkbox" ${layer.visible ? 'checked' : ''} onclick="toggleLayerVisibility(event, ${index})">
+                        <button class="btn btn-sm btn-secondary" onclick="openLayerProperties(${index})">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="removeLayer(${index})">Delete</button>
+                    </div>
+                `;
+                layersList.appendChild(layerDiv);
+            });
+        }
+
+        // Function to select a layer
+        function selectLayer(index) {
+            activeLayerIndex = index;
+            updateLayersPanel();
+        }
+
+        // Function to toggle layer visibility
+        function toggleLayerVisibility(event, index) {
+            layers[index].visible = event.target.checked;
+            drawFractal();
+        }
+
+        // Function to open layer properties modal
+        function openLayerProperties(index) {
+            activeLayerIndex = index;
+            const layer = layers[index];
+            document.getElementById('layerName').value = layer.name;
+            document.getElementById('layerColor').value = layer.color;
+            document.getElementById('sInput').value = layer.s;
+            document.getElementById('rInput').value = layer.r;
+            document.getElementById('thetaInput').value = layer.theta;
+            document.getElementById('eSyncInput').value = layer.eSync;
+            document.getElementById('phiInput').value = layer.phi;
+
+            const layerModal = new bootstrap.Modal(document.getElementById('layerModal'));
+            layerModal.show();
+        }
+
+        // Function to save layer properties from modal
+        function saveLayerProperties() {
+            const layer = layers[activeLayerIndex];
+            layer.name = document.getElementById('layerName').value;
+            layer.color = document.getElementById('layerColor').value;
+            layer.s = parseFloat(document.getElementById('sInput').value);
+            layer.r = parseFloat(document.getElementById('rInput').value);
+            layer.theta = parseFloat(document.getElementById('thetaInput').value);
+            layer.eSync = parseFloat(document.getElementById('eSyncInput').value);
+            layer.phi = parseFloat(document.getElementById('phiInput').value);
+
+            updateLayersPanel();
+            drawFractal();
+
+            const layerModal = bootstrap.Modal.getInstance(document.getElementById('layerModal'));
+            layerModal.hide();
+        }
+
+        // Function to remove a layer
+        function removeLayer(index) {
+            layers.splice(index, 1);
+            if (activeLayerIndex >= layers.length) {
+                activeLayerIndex = layers.length -1;
+            }
+            updateLayersPanel();
+            drawFractal();
+        }
+
+        // Custom fractal formula based on the time travel equation
+        function customFractalFormula(z, c, S, R, theta, E_sync, Phi) {
+            const cosTheta = Math.cos(theta);
+            const sinPhi = Math.sin(Phi);
+            if (E_sync * sinPhi === 0) return z; // Prevent division by zero
+            const timeTravelFactor = (S * R * cosTheta) / (E_sync * sinPhi);
+            return {
+                re: z.re ** 2 - z.im ** 2 + timeTravelFactor * c.re,
+                im: 2 * z.re * z.im + timeTravelFactor * c.im,
+            };
+        }
+
+        // Draw the fractal on the canvas
+        function drawFractal() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const maxIter = 100;
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Create an off-screen canvas for layering
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = width;
+            offCanvas.height = height;
+            const offCtx = offCanvas.getContext('2d');
+
+            // Define the complex plane boundaries
+            const xMin = -2.0, xMax = 2.0;
+            const yMin = -2.0, yMax = 2.0;
+
+            // Iterate over each layer
+            layers.forEach(layer => {
+                if (!layer.visible) return;
+
+                const s = layer.s;
+                const r = layer.r;
+                const theta = layer.theta * (Math.PI / 180);
+                const eSync = layer.eSync;
+                const phi = layer.phi * (Math.PI / 180);
+
+                // Precompute constants
+                const cosTheta = Math.cos(theta);
+                const sinPhi = Math.sin(phi);
+                const denom = eSync * sinPhi || 1e-10; // Prevent division by zero
+                const timeTravelFactor = (s * r * cosTheta) / denom;
+
+                // Get image data for direct pixel manipulation
+                const imageData = offCtx.createImageData(width, height);
+                const data = imageData.data;
+
+                // Iterate over each pixel on the canvas
+                for (let py = 0; py < height; py++) {
+                    const cIm = yMin + (py / height) * (yMax - yMin);
+                    for (let px = 0; px < width; px++) {
+                        const cRe = xMin + (px / width) * (xMax - xMin);
+                        let z = { re: 0, im: 0 };
+                        const c = { re: cRe, im: cIm };
+                        let iteration = 0;
+
+                        // Iterate using the custom fractal formula
+                        while (iteration < maxIter && (z.re ** 2 + z.im ** 2) <= 4) {
+                            z = customFractalFormula(z, c, s, r, theta, eSync, phi);
+                            iteration++;
+                        }
+
+                        // Determine the color based on the iteration count
+                        const idx = (py * width + px) * 4;
+                        if (iteration !== maxIter) {
+                            const ratio = iteration / maxIter;
+                            const r = parseInt(layer.color.substr(1,2),16);
+                            const g = parseInt(layer.color.substr(3,2),16);
+                            const b = parseInt(layer.color.substr(5,2),16);
+                            data[idx] = data[idx] + r * ratio;
+                            data[idx + 1] = data[idx + 1] + g * ratio;
+                            data[idx + 2] = data[idx + 2] + b * ratio;
+                            data[idx + 3] = 255; // Fully opaque
+                        }
+                    }
+                }
+
+                // Draw the layer onto the off-screen canvas
+                offCtx.putImageData(imageData, 0, 0);
+            });
+
+            // Draw the off-screen canvas onto the main canvas
+            ctx.drawImage(offCanvas, 0, 0);
+        }
+
+        // Initialize the app
+        init();
     </script>
-  </body>
+</body>
 </html>
