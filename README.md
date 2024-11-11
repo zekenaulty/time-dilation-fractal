@@ -47,3 +47,5 @@ Our journey from a time travel formula to a Mandelbrot-like fractal is a fascina
    - **Endless Exploration**: Like fractals, our understanding of time might be infinite. Each new theory, model, or formula offers a new “zoom” into time’s structure, inviting endless exploration, discovery, and, potentially, insights into previously unseen “realms” of reality.
 
 In summary, we used a Mandelbrot-like fractal structure to provide a rich, visual model for the idea of time as an infinitely layered, self-similar phenomenon. While it’s not proof of time travel, it represents a conceptual framework that blends mathematical recursion, physics, and imagination to model time’s multidimensional complexity.
+
+https://chatgpt.com/share/67320c33-c8b8-8001-b401-eda2d4d4a328
