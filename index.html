@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Time Travel Fractal</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #000;
+        color: #fff;
+      }
+      canvas {
+        border: 1px solid #fff;
+      }
+      input {
+        margin: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Custom Time Travel Fractal</h1>
+    <canvas id="fractalCanvas" width="600" height="600"></canvas>
+    <div>
+      <label
+        >S (Curvature Factor):
+        <input type="number" id="sInput" value="1.5" step="0.1"
+      /></label>
+      <label
+        >R (Reflective Index):
+        <input type="number" id="rInput" value="0.95" step="0.01"
+      /></label>
+      <label
+        >θ (Angle in Degrees):
+        <input type="number" id="thetaInput" value="45" step="1"
+      /></label>
+      <label
+        >E_sync (Energy):
+        <input type="number" id="eSyncInput" value="2.0" step="0.1"
+      /></label>
+      <label
+        >Φ (Phase Shift in Degrees):
+        <input type="number" id="phiInput" value="30" step="1"
+      /></label>
+      <button onclick="drawFractal()">Redraw Fractal</button>
+    </div>
+
+    <script>
+      const canvas = document.getElementById('fractalCanvas');
+      const ctx = canvas.getContext('2d');
+
+      // Get input elements
+      const sInput = document.getElementById('sInput');
+      const rInput = document.getElementById('rInput');
+      const thetaInput = document.getElementById('thetaInput');
+      const eSyncInput = document.getElementById('eSyncInput');
+      const phiInput = document.getElementById('phiInput');
+
+      // Function to map value to color
+      function getColor(iteration, maxIter) {
+        const ratio = iteration / maxIter;
+        const colorValue = Math.floor(255 * ratio);
+        return `rgb(${colorValue}, ${colorValue}, ${colorValue})`;
+      }
+
+      // Custom fractal formula based on the time travel equation
+      function customFractalFormula(z, c, S, R, theta, E_sync, Phi) {
+        const cosTheta = Math.cos(theta);
+        const sinPhi = Math.sin(Phi);
+        if (E_sync * sinPhi === 0) return z;
+        const timeTravelFactor = (S * R * cosTheta) / (E_sync * sinPhi);
+        return {
+          re: z.re ** 2 - z.im ** 2 + timeTravelFactor * c.re,
+          im: 2 * z.re * z.im + timeTravelFactor * c.im,
+        };
+      }
+
+      // Draw the fractal on the canvas
+      function drawFractal() {
+        const width = canvas.width;
+        const height = canvas.height;
+        const maxIter = 100;
+        const s = parseFloat(sInput.value);
+        const r = parseFloat(rInput.value);
+        const theta = parseFloat(thetaInput.value) * (Math.PI / 180);
+        const eSync = parseFloat(eSyncInput.value);
+        const phi = parseFloat(phiInput.value) * (Math.PI / 180);
+
+        // Define the complex plane boundaries
+        const xMin = -2.0,
+          xMax = 2.0;
+        const yMin = -2.0,
+          yMax = 2.0;
+
+        // Iterate over each pixel on the canvas
+        for (let px = 0; px < width; px++) {
+          for (let py = 0; py < height; py++) {
+            // Map pixel coordinates to the complex plane
+            const cRe = xMin + (px / width) * (xMax - xMin);
+            const cIm = yMin + (py / height) * (yMax - yMin);
+            let z = { re: 0, im: 0 };
+            let c = { re: cRe, im: cIm };
+            let iteration = 0;
+
+            // Iterate using the custom fractal formula
+            while (iteration < maxIter && z.re ** 2 + z.im ** 2 <= 4) {
+              z = customFractalFormula(z, c, s, r, theta, eSync, phi);
+              iteration++;
+            }
+
+            // Determine the color based on the iteration count
+            const color =
+              iteration === maxIter ? 'black' : getColor(iteration, maxIter);
+            ctx.fillStyle = color;
+            ctx.fillRect(px, py, 1, 1);
+          }
+        }
+      }
+
+      // Initial draw
+      drawFractal();
+    </script>
+  </body>
+</html>
