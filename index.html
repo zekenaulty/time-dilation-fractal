@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Custom Time Travel Fractal with Layers</title>
+    <title>Mandelbrot as a Model of Complex Dynamics</title>
     <!-- Bootswatch Darkly Theme CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/darkly/bootstrap.min.css">
     <style>
@@ -69,7 +69,7 @@
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">Custom Time Travel Fractal with Layers</a>
+        <a class="navbar-brand" href="#">Mandelbrot as a Model of Complex Dynamics</a>
     </nav>
 
     <div id="main-container">
@@ -156,7 +156,7 @@
         function addLayer() {
             const newLayer = {
                 name: 'Layer ' + (layers.length + 1),
-                color: '#'+Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+                color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
                 s: 1.5,
                 r: 0.95,
                 theta: 45,
@@ -165,7 +165,7 @@
                 visible: true,
             };
             layers.push(newLayer);
-            activeLayerIndex = layers.length -1;
+            activeLayerIndex = layers.length - 1;
             updateLayersPanel();
             drawFractal();
         }
@@ -239,7 +239,7 @@
         function removeLayer(index) {
             layers.splice(index, 1);
             if (activeLayerIndex >= layers.length) {
-                activeLayerIndex = layers.length -1;
+                activeLayerIndex = layers.length - 1;
             }
             updateLayersPanel();
             drawFractal();
@@ -257,6 +257,18 @@
             };
         }
 
+        // Function to blend two colors with alpha
+        function blendColors(src, dest) {
+            const alpha = src.a / 255;
+            const invAlpha = 1 - alpha;
+            return {
+                r: Math.min(255, src.r * alpha + dest.r * invAlpha),
+                g: Math.min(255, src.g * alpha + dest.g * invAlpha),
+                b: Math.min(255, src.b * alpha + dest.b * invAlpha),
+                a: 255,
+            };
+        }
+
         // Draw the fractal on the canvas
         function drawFractal() {
             const width = canvas.width;
@@ -266,11 +278,17 @@
             // Clear the canvas
             ctx.clearRect(0, 0, width, height);
 
-            // Create an off-screen canvas for layering
-            const offCanvas = document.createElement('canvas');
-            offCanvas.width = width;
-            offCanvas.height = height;
-            const offCtx = offCanvas.getContext('2d');
+            // Create a single ImageData object
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+
+            // Initialize pixel data to transparent black
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = 0;     // R
+                data[i + 1] = 0; // G
+                data[i + 2] = 0; // B
+                data[i + 3] = 0; // A
+            }
 
             // Define the complex plane boundaries
             const xMin = -2.0, xMax = 2.0;
@@ -292,9 +310,10 @@
                 const denom = eSync * sinPhi || 1e-10; // Prevent division by zero
                 const timeTravelFactor = (s * r * cosTheta) / denom;
 
-                // Get image data for direct pixel manipulation
-                const imageData = offCtx.createImageData(width, height);
-                const data = imageData.data;
+                // Parse layer color
+                const rColor = parseInt(layer.color.substr(1, 2), 16);
+                const gColor = parseInt(layer.color.substr(3, 2), 16);
+                const bColor = parseInt(layer.color.substr(5, 2), 16);
 
                 // Iterate over each pixel on the canvas
                 for (let py = 0; py < height; py++) {
@@ -315,23 +334,30 @@
                         const idx = (py * width + px) * 4;
                         if (iteration !== maxIter) {
                             const ratio = iteration / maxIter;
-                            const r = parseInt(layer.color.substr(1,2),16);
-                            const g = parseInt(layer.color.substr(3,2),16);
-                            const b = parseInt(layer.color.substr(5,2),16);
-                            data[idx] = data[idx] + r * ratio;
-                            data[idx + 1] = data[idx + 1] + g * ratio;
-                            data[idx + 2] = data[idx + 2] + b * ratio;
-                            data[idx + 3] = 255; // Fully opaque
+                            const srcColor = {
+                                r: rColor,
+                                g: gColor,
+                                b: bColor,
+                                a: 255 * ratio, // Alpha based on iteration
+                            };
+                            const destColor = {
+                                r: data[idx],
+                                g: data[idx + 1],
+                                b: data[idx + 2],
+                                a: data[idx + 3],
+                            };
+                            const blendedColor = blendColors(srcColor, destColor);
+                            data[idx] = blendedColor.r;
+                            data[idx + 1] = blendedColor.g;
+                            data[idx + 2] = blendedColor.b;
+                            data[idx + 3] = blendedColor.a;
                         }
                     }
                 }
-
-                // Draw the layer onto the off-screen canvas
-                offCtx.putImageData(imageData, 0, 0);
             });
 
-            // Draw the off-screen canvas onto the main canvas
-            ctx.drawImage(offCanvas, 0, 0);
+            // Draw the image data onto the canvas
+            ctx.putImageData(imageData, 0, 0);
         }
 
         // Initialize the app
